@@ -35,6 +35,7 @@ function syncSolutionHeap(logSources, printer) {
 }
 
 module.exports = (logSources, printer) => {
+  console.log("Starting sync sort...");
   syncSolutionHeap(logSources, printer);
   console.log("Sync sort complete.");
 };

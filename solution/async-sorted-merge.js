@@ -69,6 +69,7 @@ async function asyncSolutionSorting(logSources, printer) {
 
 module.exports = async (logSources, printer) => {
   console.log("Starting async sort...");
-  // await asyncSolutionSorting(logSources, printer);
-  // await asyncSolutionSorting(logSources, printer);
+  await asyncSolutionSorting(logSources, printer);
+  await asyncSolutionSorting(logSources, printer);
+  console.log("Finished sort complete.");
 };
