@@ -1,6 +1,51 @@
 "use strict";
 const { insert, extractMin } = require("./heap");
 
+async function asyncSolutionHeapOptimized(logSources, printer) {
+  const heap = [];
+  let activeSources = logSources.filter((source) => !source.drained);
+
+  // Populate the heap with the first entry from each active log source.
+  // This operation is done in parallel for all active sources.
+  await Promise.all(
+    activeSources.map(async (source, index) => {
+      const entry = await source.popAsync();
+      if (entry) {
+        insert(heap, { entry, index });
+      } else {
+        source.drained = true;
+      }
+    })
+  );
+
+  while (heap.length > 0) {
+    const { entry, index } = extractMin(heap);
+    printer.print(entry);
+
+    // Initiate fetching the next entry from each active source in parallel.
+    const fetchPromises = activeSources.map(async (source) => {
+      if (!source.drained) {
+        const nextEntry = await source.popAsync();
+        if (nextEntry) {
+          insert(heap, {
+            entry: nextEntry,
+            index: activeSources.indexOf(source),
+          });
+        } else {
+          source.drained = true;
+        }
+      }
+    });
+
+    // Wait for all fetch operations to complete before proceeding.
+    await Promise.all(fetchPromises.filter((p) => p !== undefined));
+
+    activeSources = activeSources.filter((source) => !source.drained);
+  }
+
+  printer.done();
+}
+
 /**
  * Logs printed:            24523
  * Time taken (s):          106.345
@@ -69,7 +114,6 @@ async function asyncSolutionSorting(logSources, printer) {
 
 module.exports = async (logSources, printer) => {
   console.log("Starting async sort...");
-  await asyncSolutionHeap(logSources, printer);
-  await asyncSolutionSorting(logSources, printer);
+  await asyncSolutionHeapOptimized(logSources, printer);
   console.log("Finished sort complete.");
 };
